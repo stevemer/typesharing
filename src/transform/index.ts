@@ -1,7 +1,7 @@
 import type { GlobalContext, OperationObject, PathItemObject } from "../types.js";
 import { comment, tsReadonly } from "../utils.js";
 import { transformHeaderObjMap } from "./headers.js";
-import { operationRequestType, transformOperationObj } from "./operation.js";
+import { operationRequestType, queryStringType, transformOperationObj } from "./operation.js";
 import { getOperationId, getOperationIdFromPath, transformPathsObj } from "./paths.js";
 import { transformRequestBodies } from "./request.js";
 import { getResponseTypes, transformResponsesObj } from "./responses.js";
@@ -129,13 +129,18 @@ export function transformAll(schema: any, ctx: GlobalContext): Record<string, st
   if (Object.keys(operations).length) {
     for (const id of Object.keys(operations)) {
       const { operation, pathItem } = operations[id];
+      const typeArgs = {
+        ...ctx,
+        pathItem,
+        globalParameters: (schema.components && schema.components.parameters) || schema.parameters,
+      };
       output.express += ` "${id}": {
     responses: ${operation.responses ? getResponseTypes(id, operation.responses) : "void"};
-    request: expressRequest<Request<${operationRequestType(id, operation, {
-      ...ctx,
-      pathItem,
-      globalParameters: (schema.components && schema.components.parameters) || schema.parameters,
-    })}>, SLocals>;
+    request: expressRequest<Request<${operationRequestType(id, operation, typeArgs)}>, SLocals, ${queryStringType(
+        id,
+        operation,
+        typeArgs
+      )}>;
     response: Response<express<SLocals, RLocals>["${id}"]["responses"]>;
     handler: (req: express<SLocals, RLocals>["${id}"]["request"], res: express<SLocals, RLocals>["${id}"]["response"]) => void | Promise<void>;
 }\n`;
