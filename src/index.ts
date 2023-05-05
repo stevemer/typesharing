@@ -226,6 +226,39 @@ async function openapiTS(
     output.push(`export type operations = Record<string, never>;`, "");
   }
 
+  // Express type definitions
+  if (Object.keys(ctx.operations).length) {
+    for (const id of Object.keys(ctx.operations)) {
+      const { operation, pathItem } = ctx.operations[id];
+      const typeArgs = {
+        ...ctx,
+        pathItem,
+        globalParameters: (schema.components && schema.components.parameters) || schema.parameters,
+      };
+      output.push(` "${id}": {
+      responses: ${operation.responses ? getResponseTypes(id, operation.responses) : "void"};
+      request: expressRequest<Request<${operationRequestType(id, operation, typeArgs)}>, SLocals, ${queryStringType(
+        id,
+        operation,
+        typeArgs
+      )}>;
+      response: Response<express<SLocals, RLocals>["${id}"]["responses"]>;
+      handler: (req: express<SLocals, RLocals>["${id}"]["request"], res: express<SLocals, RLocals>["${id}"]["response"]) => void | Promise<void>;
+  }\n`);
+    }
+    // Now write one that is purely path based that points to express so that handlers
+    // have an easier time mapping their types (I don't generally like operationIds for this reason,
+    // but I see the argument for callers)
+    // output.handlers = "";
+    // for (const [path, methods] of Object.entries(schema.paths)) {
+    //   output.handlers += ` ${getOperationIdFromPath(path)}: {\n`;
+    //   for (const [method, op] of Object.entries(methods as Record<string, { operationId?: string }>)) {
+    //     output.handlers += ` ${method}: express<SLocals, RLocals>["${getOperationId(op, method, path)}"]["handler"]\n`;
+    //   }
+    //   output.handlers += ` }\n`;
+    // }
+  }
+
   // 4a. OneOf type helper (@see https://github.com/Microsoft/TypeScript/issues/14094#issuecomment-723571692)
   if (output.join("\n").includes("OneOf")) {
     output.splice(
