@@ -1,7 +1,4 @@
-example/*.ts
 bin
+coverage
 dist
 examples
-**/generated/*
-**/expected/*
-**/specs/*

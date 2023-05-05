@@ -1,4 +1,3 @@
-examples/**/*.ts
-*.md
+examples
 *.yaml
 *.yml

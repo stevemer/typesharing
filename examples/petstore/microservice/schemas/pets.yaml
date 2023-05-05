@@ -1,0 +1,7 @@
+type: array
+items:
+  $ref: pet.yaml
+x-tags:
+  - Pets
+title: Pets
+description: A list of pets.

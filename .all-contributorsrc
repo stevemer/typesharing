@@ -542,7 +542,8 @@
       "contributions": [
         "code",
         "bug",
-        "test"
+        "test",
+        "doc"
       ]
     },
     {
@@ -555,6 +556,187 @@
         "test",
         "bug"
       ]
+    },
+    {
+      "login": "Semigradsky",
+      "name": "Dmitry Semigradsky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1198848?v=4",
+      "profile": "https://semigradsky.dev/",
+      "contributions": [
+        "bug",
+        "test",
+        "code"
+      ]
+    },
+    {
+      "login": "MrLeebo",
+      "name": "Jeremy Liberman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2754163?v=4",
+      "profile": "http://jeremyliberman.com/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "axelhzf",
+      "name": "Axel Hernández Ferrera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/175627?v=4",
+      "profile": "http://axelhzf.com",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "imagoiq",
+      "name": "Loïc Fürhoff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12294151?v=4",
+      "profile": "https://github.com/imagoiq",
+      "contributions": [
+        "code",
+        "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "BTMPL",
+      "name": "Bartosz Szczeciński",
+      "avatar_url": "https://avatars.githubusercontent.com/u/247153?v=4",
+      "profile": "https://github.com/BTMPL",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "HiiiiD",
+      "name": "Marco Salomone",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61231210?v=4",
+      "profile": "https://github.com/HiiiiD",
+      "contributions": [
+        "code",
+        "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "yacinehmito",
+      "name": "Yacine Hmito",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6893840?v=4",
+      "profile": "https://github.com/yacinehmito",
+      "contributions": [
+        "code",
+        "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "sajadtorkamani",
+      "name": "Sajad Torkamani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9380313?v=4",
+      "profile": "http://sajadtorkamani.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mvdbeek",
+      "name": "Marius van den Beek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6804901?v=4",
+      "profile": "https://sci-scale.net/",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "sgrimm",
+      "name": "Steven Grimm",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1248649?v=4",
+      "profile": "https://github.com/sgrimm",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "Swiftwork",
+      "name": "Erik Hughes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/455178?v=4",
+      "profile": "https://trutoo.com/people/erik-hughes",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "mtth",
+      "name": "Matthieu Monsch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1216372?v=4",
+      "profile": "https://github.com/mtth",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "mitchell-merry",
+      "name": "Mitchell Merry",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8567231?v=4",
+      "profile": "https://github.com/mitchell-merry",
+      "contributions": [
+        "code",
+        "test",
+        "bug"
+      ]
+    },
+    {
+      "login": "qnp",
+      "name": "François Risoud",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6012554?v=4",
+      "profile": "http://www.francoisrisoud.com",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "shoffmeister",
+      "name": "shoffmeister",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3868036?v=4",
+      "profile": "https://github.com/shoffmeister",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "liangskyli",
+      "name": "liangsky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31531283?v=4",
+      "profile": "https://github.com/liangskyli",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "happycollision",
+      "name": "Don Denton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3663628?v=4",
+      "profile": "http://happycollision.com",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -562,5 +744,6 @@
   "projectOwner": "drwpow",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitConvention": "angular"
 }

@@ -4,16 +4,19 @@
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2018"],
-    "moduleResolution": "Node",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
     "noImplicitReturns": true,
     "outDir": "./dist",
     "removeComments": true,
+    "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "ES2018",
+    "target": "ESNext",
+    "types": ["vitest/globals"],
     "useDefineForClassFields": true
   },
-  "exclude": ["examples/*", "tests/**/*"],
-  "include": ["src"]
+  "include": ["scripts", "src", "test", "*.ts"],
+  "exclude": ["examples", "node_modules"]
 }

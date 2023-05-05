@@ -1,72 +1,67 @@
 #!/usr/bin/env node
 
-import fs from "fs";
+import fs from "node:fs";
 import path from "path";
-import glob from "tiny-glob";
+import { URL } from "node:url";
+import glob from "fast-glob";
 import parser from "yargs-parser";
 import openapiTS from "../dist/index.js";
-
-const GREEN = "\u001b[32m";
-const BOLD = "\u001b[1m";
-const RESET = "\u001b[0m";
+import { c, error } from "../dist/utils.js";
 
 const HELP = `Usage
   $ openapi-typescript [input] [options]
 
 Options
-  --help                       display this
+  --help                       Display this
+  --version                    Display the version
   --output, -o                 Specify output file (default: stdout)
   --auth                       (optional) Provide an authentication token for private URL
   --headersObject, -h          (optional) Provide a JSON object as string of HTTP headers for remote schema request
   --header, -x                 (optional) Provide an array of or singular headers as an alternative to a JSON object. Each header must follow the key: value pattern
   --httpMethod, -m             (optional) Provide the HTTP Verb/Method for fetching a schema from a remote URL
-  --immutable-types, -it       (optional) Generates immutable types (readonly properties and readonly array)
-  --content-never              (optional) If supplied, an omitted reponse \`content\` property will be generated as \`never\` instead of \`unknown\`
-  --additional-properties, -ap (optional) Allow arbitrary properties for all schema objects without "additionalProperties: false"
+  --export-type, -t            (optional) Export "type" instead of "interface"
+  --immutable-types            (optional) Generates immutable types (readonly properties and readonly array)
+  --additional-properties      (optional) Allow arbitrary properties for all schema objects without "additionalProperties: false"
+  --empty-objects-unknown      (optional) Allow arbitrary properties for schema objects with no specified properties, and no specified "additionalProperties"
   --default-non-nullable       (optional) If a schema object has a default value set, don’t mark it as nullable
-  --prettier-config, -c        (optional) specify path to Prettier config file
-  --raw-schema                 (optional) Parse as partial schema (raw components)
-  --paths-enum, -pe            (optional) Generate an enum containing all API paths.
-  --export-type                (optional) Export type instead of interface
   --support-array-length       (optional) Generate tuples using array minItems / maxItems
   --path-params-as-types       (optional) Substitute path parameter names with their respective types
-  --version                    (optional) Force schema parsing version
+  --alphabetize                (optional) Sort types alphabetically
 `;
 
 const OUTPUT_FILE = "FILE";
 const OUTPUT_STDOUT = "STDOUT";
+const CWD = new URL(`file://${process.cwd()}/`);
+const EXT_RE = /\.[^.]+$/i;
+const HTTP_RE = /^https?:\/\//;
 
 const timeStart = process.hrtime();
 
-function errorAndExit(errorMessage) {
-  process.exitCode = 1; // needed for async functions
-  throw new Error(errorMessage);
-}
+const [, , ...args] = process.argv;
+if (args.includes("-ap")) errorAndExit(`The -ap alias has been deprecated. Use "--additional-properties" instead.`);
+if (args.includes("-it")) errorAndExit(`The -it alias has been deprecated. Use "--immutable-types" instead.`);
 
-const [, , input, ...args] = process.argv;
 const flags = parser(args, {
   array: ["header"],
   boolean: [
+    "help",
+    "version",
     "defaultNonNullable",
+    "emptyObjectsUnknown",
     "immutableTypes",
     "contentNever",
-    "rawSchema",
     "exportType",
     "supportArrayLength",
-    "makePathsEnum",
     "pathParamsAsTypes",
+    "alphabetize",
   ],
-  number: ["version"],
-  string: ["auth", "header", "headersObject", "httpMethod", "prettierConfig"],
+  string: ["auth", "header", "headersObject", "httpMethod"],
   alias: {
-    additionalProperties: ["ap"],
     header: ["x"],
+    exportType: ["t"],
     headersObject: ["h"],
     httpMethod: ["m"],
-    immutableTypes: ["it"],
     output: ["o"],
-    prettierConfig: ["c"],
-    makePathsEnum: ["pe"],
   },
   default: {
     httpMethod: "GET",
@@ -96,12 +91,10 @@ async function generateSchema(pathToSpec) {
   // generate schema
   const result = await openapiTS(pathToSpec, {
     additionalProperties: flags.additionalProperties,
+    emptyObjectsUnknown: flags.emptyObjectsUnknown,
     auth: flags.auth,
     defaultNonNullable: flags.defaultNonNullable,
     immutableTypes: flags.immutableTypes,
-    prettierConfig: flags.prettierConfig,
-    rawSchema: flags.rawSchema,
-    makePathsEnum: flags.makePathsEnum,
     contentNever: flags.contentNever,
     silent: output === OUTPUT_STDOUT,
     version: flags.version,
@@ -110,29 +103,27 @@ async function generateSchema(pathToSpec) {
     exportType: flags.exportType,
     supportArrayLength: flags.supportArrayLength,
     pathParamsAsTypes: flags.pathParamsAsTypes,
+    alphabetize: flags.alphabetize,
   });
 
   // output
   if (output === OUTPUT_FILE) {
-    let outputFilePath = path.resolve(process.cwd(), flags.output); // note: may be directory
+    let outputFilePath = new URL(flags.output, CWD); // note: may be directory
     const isDir = fs.existsSync(outputFilePath) && fs.lstatSync(outputFilePath).isDirectory();
     if (isDir) {
-      const filename = pathToSpec.replace(new RegExp(`${path.extname(pathToSpec)}$`), ".ts");
-      outputFilePath = path.join(outputFilePath, filename);
+      const filename = pathToSpec.replace(EXT_RE, ".ts");
+      const originalOutputFilePath = outputFilePath;
+      outputFilePath = new URL(filename, originalOutputFilePath);
+      if (outputFilePath.protocol !== "file:") {
+        outputFilePath = new URL(outputFilePath.host.replace(EXT_RE, ".ts"), originalOutputFilePath);
+      }
     }
 
-    const existingContent = fs.existsSync(outputFilePath) ? fs.readFileSync(outputFilePath, "utf8") : "";
-    if (existingContent !== result) {
-      fs.writeFileSync(outputFilePath, result, "utf8");
+    fs.writeFileSync(outputFilePath, result, "utf8");
 
-      const timeEnd = process.hrtime(timeStart);
-      const time = timeEnd[0] + Math.round(timeEnd[1] / 1e6);
-      console.log(`🚀 ${GREEN}${pathToSpec} -> ${BOLD}${outputFilePath}${RESET}${GREEN} [${time}ms]${RESET}`);
-    } else {
-      const timeEnd = process.hrtime(timeStart);
-      const time = timeEnd[0] + Math.round(timeEnd[1] / 1e6);
-      console.log(`🚀 ${GREEN}${pathToSpec} == ${BOLD}${outputFilePath}${RESET}${GREEN} [${time}ms]${RESET}`);
-    }
+    const timeEnd = process.hrtime(timeStart);
+    const time = timeEnd[0] + Math.round(timeEnd[1] / 1e6);
+    console.log(`🚀 ${c.green(`${pathToSpec} → ${c.bold(outputFilePath)}`)} ${c.dim(`[${time}ms]`)}`);
   } else {
     process.stdout.write(result);
     // if stdout, (still) don’t log anything to console!
@@ -142,63 +133,63 @@ async function generateSchema(pathToSpec) {
 }
 
 async function main() {
-  if (flags.help) {
+  if ("help" in flags) {
     console.info(HELP);
+    process.exit(0);
+  }
+  const packageJSON = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  if ("version" in flags) {
+    console.info(`v${packageJSON.version}`);
     process.exit(0);
   }
 
   let output = flags.output ? OUTPUT_FILE : OUTPUT_STDOUT; // FILE or STDOUT
-  const pathToSpec = input;
+  let outputFile = new URL(flags.output, CWD);
+  let outputDir = new URL(".", outputFile);
 
-  if (output === OUTPUT_FILE) {
-    const packageJSON = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-    console.info(`✨ ${BOLD}openapi-typescript-express ${packageJSON.version}${RESET}`); // only log if we’re NOT writing to stdout
-  }
+  if (output === OUTPUT_FILE) console.info(`✨ ${c.bold(`openapi-typescript-express ${packageJSON.version}`)}`); // only log if we’re NOT writing to stdout
 
-  // error: --raw-schema
-  if (flags.rawSchema && !flags.version) {
-    throw new Error(`--raw-schema requires --version flag`);
-  }
-
-  // handle remote schema, exit
-  if (/^https?:\/\//.test(pathToSpec)) {
-    if (output !== "." && output === OUTPUT_FILE) fs.mkdirSync(path.dirname(flags.output), { recursive: true });
-    await generateSchema(pathToSpec);
-    return;
-  }
+  const pathToSpec = flags._[0];
 
   // handle stdin schema, exit
-  if (pathToSpec === "-") {
-    if (output !== "." && output === OUTPUT_FILE) fs.mkdirSync(path.dirname(flags.output), { recursive: true });
+  if (!pathToSpec) {
+    if (output !== "." && output === OUTPUT_FILE) fs.mkdirSync(outputDir, { recursive: true });
     await generateSchema(process.stdin);
     return;
   }
 
+  // handle remote schema, exit
+  if (HTTP_RE.test(pathToSpec)) {
+    if (output !== "." && output === OUTPUT_FILE) fs.mkdirSync(outputDir, { recursive: true });
+    await generateSchema(pathToSpec);
+    return;
+  }
+
   // handle local schema(s)
-  const inputSpecPaths = await glob(pathToSpec, { filesOnly: true });
+  const inputSpecPaths = await glob(pathToSpec);
   const isGlob = inputSpecPaths.length > 1;
 
   // error: no matches for glob
   if (inputSpecPaths.length === 0) {
-    errorAndExit(`❌ Could not find any specs matching "${pathToSpec}". Please check that the path is correct.`);
+    error(`Could not find any specs matching "${pathToSpec}". Please check that the path is correct.`);
+    process.exit(1);
   }
 
   // error: tried to glob output to single file
-  if (isGlob && output === OUTPUT_FILE && fs.existsSync(flags.output) && fs.lstatSync(flags.output).isFile()) {
-    errorAndExit(`❌ Expected directory for --output if using glob patterns. Received "${flags.output}".`);
+  if (isGlob && output === OUTPUT_FILE && fs.existsSync(outputDir) && fs.lstatSync(outputDir).isFile()) {
+    error(`Expected directory for --output if using glob patterns. Received "${flags.output}".`);
+    process.exit(1);
   }
 
   // generate schema(s) in parallel
   await Promise.all(
     inputSpecPaths.map(async (specPath) => {
       if (flags.output !== "." && output === OUTPUT_FILE) {
-        let outputDir = path.resolve(process.cwd(), flags.output);
         if (isGlob) {
-          outputDir = path.resolve(outputDir, path.dirname(specPath)); // globs: use output dir + spec dir
+          fs.mkdirSync(new URL(path.dirname(specPath), outputDir), { recursive: true }); // recursively make parent dirs
         } else {
-          outputDir = path.dirname(outputDir); // single files: just use output parent dir
+          fs.mkdirSync(outputDir, { recursive: true }); // recursively make parent dirs
         }
-        fs.mkdirSync(outputDir, { recursive: true }); // recursively make parent dirs
       }
       await generateSchema(specPath);
     })

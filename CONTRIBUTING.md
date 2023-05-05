@@ -1,98 +1,136 @@
 # Contributing
 
-Thanks for being willing to contribute!
+Thanks for being willing to contribute! 🙏
 
-**Working on your first Pull Request?** You can learn how from this _free_ series [How to Contribute to an Open Source
-Project on GitHub][egghead]
+**Working on your first Pull Request (PR)?** You can learn how from this _free_ series [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github)
 
-## Project setup
+## Open issues
+
+Please check out the [the open issues](https://github.com/drwpow/openapi-typescript/issues). Issues labelled [**Help Wanted**](https://github.com/drwpow/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) and [**Good First Issue**](https://github.com/drwpow/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are especially good to help with.
+
+Contributing doesn’t have to be in code! Simply answering questions in open issues, or providing workarounds, is just as important a contribution as making pull requests.
+
+## Opening a Pull Request
+
+Pull requests are **welcome** for this repo! Bugfixes will always be accepted, though in some cases some small changes may be requested.
+
+However, if adding a feature or breaking change, please **open an issue first to discuss.** This ensures no time or work is wasted writing code that won’t be accepted to the project (see [Project Goals](./README.md#-project-goals)). Undiscussed feature work may be rejected at the discretion of the maintainers.
+
+### Setup
 
 1. Install [pnpm](https://pnpm.io/)
-2. Fork and clone the repo
+2. [Fork this repo](https://docs.github.com/en/get-started/quickstart/fork-a-repo) and clone your copy locally
 3. Run `pnpm i` to install dependencies
-4. Create a branch for your PR with `git checkout -b pr/your-branch-name`
 
-It’s also recommended you have [ESLint][eslint] installed and set up correctly. You may also run the command
-`npm run lint` to see lint errors.
+### Writing code
 
-> Tip: Keep your `main` branch pointing at the original repository and make pull requests from branches on your fork. To
-> do this, run:
->
-> ```
-> git remote add upstream https://github.com/drwpow/openapi-typescript.git
-> git fetch upstream
-> git branch --set-upstream-to=upstream/main main
-> ```
->
-> This will add the original repository as a "remote" called "upstream," Then fetch the git information from that
-> remote, then set your local `main` branch to use the upstream main branch whenever you run `git pull`. Then you can
-> make all of your pull request branches based on this `main` branch. Whenever you want to update your version of
-> `main`, do a regular `git pull`.
+Create a new branch for your PR with `git checkout -b your-branch-name`. Add the relevant code as well as docs and tests. When you push everything up (`git push`), navigate back to your repo GitHub and you should see a prompt to open a new PR.
 
-## Committing and pushing changes
+While best practices for commit messages are encouraged (e.g. start with an imperative verb, keep it short, use the body if needed), this repo doesn’t follow any specific guidelines like [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Clarity is favored over strict rules. Changelogs are generated separately from git (see [the Changelogs section](#changelogs)
 
-Please make sure to run the tests (`npm test`) before you commit your changes.
+When working locally, run:
 
-### Local schemas
-
-This repo supports OpenAPI 2.0 and 3.0. There are some real-world examples located in `tests/v2/specs/*.yaml` and
-`tests/v3/specs/*.yaml`, respectively. Testing large, real schemas was a major goal of this project. Many libraries only
-test the “Petstore” example from Swagger, which is contrived and is missing much complexity from companies’ production
-schemas.
-
-_Note: don’t update the `yaml` schemas with your own custom additions (but if the official versions have updated, then
-it’s fine to update them here). If you’d like to add your schema for testing, then please add them as a new schema, and
-add them to `./expected/*.ts`._
-
-#### Regenerating schemas
-
-If you’ve added a feature or fixed a bug and need to update the generated schemas, run the following:
-
-```
-# 1. re-build the package
-npm run build
-# 2. run the local CLI (not the npm one!)
-./bin/cli.js tests/v3/specs/github.yaml -o tests/v3/expected/github.ts
-# NOTE: on Windows, try running the script on WSL if getting errors
+```bash
+npm run dev
 ```
 
-This should update the expected TypeScript definiton.
+This will compile the code as you change automatically.
 
-_Also if this appears in `examples/` feel free to update that, too!_
+### Writing the PR
+
+**Please fill out the template!** It’s a very lightweight template 🙂.
+
+### Use Test-driven Development!
+
+Contributing to this library is hard-bordering-on-impossible without a [test-driven development (TDD)](https://en.wikipedia.org/wiki/Test-driven_development) strategy. If you’re new to this, the basic workflow is:
+
+1. First, write a [test](#testing) that fully outlines what you’d _like_ the output to be.
+2. Next, make sure this test **fails** when you run `npm test` (yes, _fails!_)
+3. Then, make changes to `src/` until the tests pass.
+
+Reasoning about code generation can be quite difficult until you “invert your thinking” and approach it output-first. Adopting TDD can turn very unclear/abstract problems into concrete ones with clear steps to resolution.
+
+✨ When starting any task, **write a failing test first!** ✨
+
+#### Updating snapshot tests
+
+To add a schema as a snapshot test, modify the [/scripts/download-schemas.ts](/scripts/download-schemas.ts) script with a path to download. There are both single-file schemas as well as multi-file schemas.
+
+### Generating types
+
+It may be surprising to hear, but _generating TypeScript types from OpenAPI is opinionated!_ Even though TypeScript and OpenAPI are very close relatives, both being JavaScript/JSON-based, they are nonetheless 2 different languages and thus there is always some room for interpretation. Likewise, some parts of the OpenAPI specification can be ambiguous on how they’re used, and what the expected type outcomes may be (though this is generally for more advanced usecasees, such as specific implementations of `anyOf` as well as [discriminator](https://spec.openapis.org/oas/latest.html#discriminatorObject) and complex polymorphism).
+
+All that said, this library should strive to generate _the most predictable_ TypeScript output for a given schema. And to achieve that, it always helps to open an [issue](https://github.com/drwpow/openapi-typescript/issues) or [discussion](https://github.com/drwpow/openapi-typescript/discussions) to gather feedback.
+
+### Opening a PR
+
+When opening a pull request, make sure all of the following is done:
+
+- [x] Tests are added
+- [x] Build passes (`npm run build`)
+- [x] Tests pass (`npm test`)
+- [x] Linting passes (`npm run lint`)
+
+Lastly, be sure to fill out the complete PR template!
+
+### Changelogs
+
+The changelog is generated via [changesets](https://github.com/changesets/changesets), and is separate from Git commit messages and pull request titles. To write a human-readable changelog for your changes, run:
+
+```
+npx changeset
+```
+
+This will ask if it’s a `patch`, `minor`, or `major` change ([semver](https://semver.org/)), along with a plain description of what you did. Commit this new file along with the rest of your PR, and during the next release this will go into the official changelog!
 
 ## Testing
 
-Tests use [Vitest](https://vitest.dev), a modern test-runner based on Jest. To run the tests locally, run:
+This library uses [Vitest](https://vitest.dev/) for testing. There’s a great [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ZixuanChen.vitest-explorer) you can optionally use if you’d like in-editor debugging tools.
 
-```
+### Running tests
+
+💡 The tests test **the production build** in `dist/`. Be sure to run `npm run build` before running tests (or keep `npm run dev` running in the background, which compiles as-you-work)!
+
+To run the entire test suite once, run:
+
+```bash
 npm test
 ```
 
 To run an individual test:
 
-```
-npx vitest [part of filename]
+```bash
+npm test -- [partial filename]
 ```
 
-Or to start all tests in watch mode:
+To start the entire test suite in watch mode:
 
-```
+```bash
 npx vitest
 ```
 
-[See docs](https://vitest.dev)
+### Running linting
 
-## Help needed
+To run ESLint on the project:
 
-Please check out the [the open issues][issues]. Issues labelled [**Help Wanted**][help-wanted] and [**Good First
-Issue**][good-first-issue] are especially good to help with.
+```bash
+npm run lint
+```
 
-Also, please watch the repo and respond to questions/bug reports/feature requests! Thanks!
+### Updating snapshot examples
 
-[all-contributors]: https://github.com/all-contributors/all-contributors
-[egghead]: https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github
-[eslint]: https://eslint.org/
-[good-first-issue]:
-  https://github.com/drwpow/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
-[help-wanted]: https://github.com/drwpow/openapi-typescript/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
-[issues]: https://github.com/drwpow/openapi-typescript/issues
+⚠️ This may break tests if schemas have been updated
+
+```bash
+npm run update:examples
+```
+
+### Unit tests or snapshot tests?
+
+This library has both unit tests (tests that test a tiny part of a schema) and snapshot tests (tests that run over an entire, complete schema). When opening a PR, the former are more valuable than the latter, and are always required. However, updating snapshot tests can help with the following:
+
+- Fixing bugs that deal with multiple schemas with remote `$ref`s
+- Fixing Node.js or OS-related bugs
+- Adding a CLI option that changes the entire output
+
+For most PRs, **snapshot tests can be avoided.** But for scenarios similar to the ones mentioned, they can ensure everything is working as expected.
