@@ -6,6 +6,8 @@ export interface TransformParameterObjectOptions {
   ctx: GlobalContext;
 }
 
+const PARAM_END_RE = /"\]$/;
+
 export default function transformParameterObject(
   parameterObject: ParameterObject,
   { path, ctx }: TransformParameterObjectOptions
