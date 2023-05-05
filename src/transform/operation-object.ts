@@ -118,3 +118,34 @@ export default function transformOperationObject(
   }
   return output.join("\n");
 }
+
+export function operationRequestType(
+  operationId: string,
+  operation: OperationObject,
+  options: TransformOperationObjectOptions
+): string {
+  const { path = {}, ...ctx } = options;
+  const parameters = (pathItem.parameters || []).concat(operation.parameters || []);
+  const types = getParameterLocations(parameters, { ...ctx, globalParameters });
+
+  const opType = `operations["${operationId}"]`;
+  const opParams = `${opType}["parameters"]`;
+  const paramType = types.includes("path") ? `${opParams}["path"]` : "never";
+  const bodyType = operation.requestBody ? `${opType}["requestBody"]["content"]["application/json"]` : "never";
+
+  return `${paramType}, express<SLocals, RLocals>["${operationId}"]["responses"], ${bodyType}, never, RLocals`;
+}
+
+export function queryStringType(
+  operationId: string,
+  operation: OperationObject,
+  options: TransformOperationObjectOptions
+): string {
+  const { path = {}, ...ctx } = options;
+  const parameters = (path.parameters || []).concat(operation.parameters || []);
+  const types = getParameterLocations(parameters, { ...ctx, globalParameters });
+  const opType = `operations["${operationId}"]`;
+  const opParams = `${opType}["parameters"]`;
+
+  return types.includes("query") ? `${opParams}["query"]` : "never";
+}

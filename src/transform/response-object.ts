@@ -84,3 +84,16 @@ export default function transformResponseObject(
   output.push(indent("}", indentLv));
   return output.join("\n");
 }
+
+export function getResponseTypes(operationId: string, responsesObj: Record<string, any>): string {
+  const responses = Object.keys(responsesObj)
+    .filter((httpStatusCode) => responsesObj[httpStatusCode]?.content?.["application/json"])
+    .map(
+      (httpStatusCode) =>
+        `operations["${operationId}"]["responses"]["${httpStatusCode}"]["content"]["application/json"]`
+    );
+  if (responses?.length) {
+    return responses.join(" | ");
+  }
+  return "void";
+}
