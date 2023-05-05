@@ -1,6 +1,6 @@
-import type { GlobalContext, OperationObject, ParameterObject } from "../types.js";
+import type { GlobalContext, OperationObject, ParameterObject, ReferenceObject, Subschema } from "../types.js";
 import { escObjKey, getEntries, getSchemaObjectComment, indent, tsOptionalProperty, tsReadonly } from "../utils.js";
-import transformParameterObject from "./parameter-object.js";
+import transformParameterObject, { getParameterLocations } from "./parameter-object.js";
 import transformRequestBodyObject from "./request-body-object.js";
 import transformResponseObject from "./response-object.js";
 import transformSchemaObject from "./schema-object.js";
@@ -122,11 +122,11 @@ export default function transformOperationObject(
 export function operationRequestType(
   operationId: string,
   operation: OperationObject,
-  options: TransformOperationObjectOptions
+  options: TransformOperationObjectOptions & { allSchemas: Subschema[] }
 ): string {
-  const { path = {}, ...ctx } = options;
-  const parameters = (pathItem.parameters || []).concat(operation.parameters || []);
-  const types = getParameterLocations(parameters, { ...ctx, globalParameters });
+  const { path, allSchemas, ctx } = options;
+  const parameters = ([] as (ReferenceObject | ParameterObject)[]).concat(operation.parameters ?? []);
+  const types = getParameterLocations(parameters, options);
 
   const opType = `operations["${operationId}"]`;
   const opParams = `${opType}["parameters"]`;
@@ -139,11 +139,11 @@ export function operationRequestType(
 export function queryStringType(
   operationId: string,
   operation: OperationObject,
-  options: TransformOperationObjectOptions
+  options: TransformOperationObjectOptions & { allSchemas: Subschema[] }
 ): string {
   const { path = {}, ...ctx } = options;
-  const parameters = (path.parameters || []).concat(operation.parameters || []);
-  const types = getParameterLocations(parameters, { ...ctx, globalParameters });
+  const parameters = ([] as (ReferenceObject | ParameterObject)[]).concat(operation.parameters ?? []);
+  const types = getParameterLocations(parameters, options);
   const opType = `operations["${operationId}"]`;
   const opParams = `${opType}["parameters"]`;
 

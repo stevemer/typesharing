@@ -8,7 +8,7 @@ import transformOperationObject from "./transform/operation-object.js";
 import transformParameterObject from "./transform/parameter-object.js";
 import transformParameterObjectArray from "./transform/parameter-object-array.js";
 import transformRequestBodyObject from "./transform/request-body-object.js";
-import transformResponseObject from "./transform/response-object.js";
+import transformResponseObject, { getResponseTypes } from "./transform/response-object.js";
 import transformSchemaObject from "./transform/schema-object.js";
 import { error, escObjKey, getDefaultFetch, getEntries, getSchemaObjectComment, indent } from "./utils.js";
 export * from "./types.js"; // expose all types to consumers
@@ -233,7 +233,7 @@ async function openapiTS(
       const typeArgs = {
         ...ctx,
         pathItem,
-        globalParameters: (schema.components && schema.components.parameters) || schema.parameters,
+        allSchemas,
       };
       output.push(` "${id}": {
       responses: ${operation.responses ? getResponseTypes(id, operation.responses) : "void"};
