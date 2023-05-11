@@ -66,6 +66,7 @@ export interface external {
 }
 
 export interface operations {
+
   /**
    * List all pets 
    * @description List the pets that exist.
@@ -138,80 +139,33 @@ export interface express<
   SLocals extends Record<string, any>,
   RLocals extends Record<string, any>
 > {
+
   listPets: {
-    responses:
-      | operations["listPets"]["responses"]["200"]["content"]["application/json"]
-      | operations["listPets"]["responses"]["default"]["content"]["application/json"];
-    request: expressRequest<
-      Request<
-        never,
-        express<SLocals, RLocals>["listPets"]["responses"],
-        never,
-        never,
-        RLocals
-      >,
-      SLocals,
-      operations["listPets"]["parameters"]["query"]
-    >;
+    responses: operations["listPets"]["responses"]["200"]["content"]["application/json"] | operations["listPets"]["responses"]["default"]["content"]["application/json"];
+    request: expressRequest<Request<never, express<SLocals, RLocals>["listPets"]["responses"], never, never, RLocals>, SLocals, operations["listPets"]["parameters"]["query"]>;
     response: Response<express<SLocals, RLocals>["listPets"]["responses"]>;
-    handler: (
-      req: express<SLocals, RLocals>["listPets"]["request"],
-      res: express<SLocals, RLocals>["listPets"]["response"]
-    ) => void | Promise<void>;
+    handler: (req: express<SLocals, RLocals>["listPets"]["request"], res: express<SLocals, RLocals>["listPets"]["response"]) => void | Promise<void>;
   };
   createPets: {
     responses: operations["createPets"]["responses"]["default"]["content"]["application/json"];
-    request: expressRequest<
-      Request<
-        never,
-        express<SLocals, RLocals>["createPets"]["responses"],
-        never,
-        never,
-        RLocals
-      >,
-      SLocals,
-      never
-    >;
+    request: expressRequest<Request<never, express<SLocals, RLocals>["createPets"]["responses"], never, never, RLocals>, SLocals, never>;
     response: Response<express<SLocals, RLocals>["createPets"]["responses"]>;
-    handler: (
-      req: express<SLocals, RLocals>["createPets"]["request"],
-      res: express<SLocals, RLocals>["createPets"]["response"]
-    ) => void | Promise<void>;
+    handler: (req: express<SLocals, RLocals>["createPets"]["request"], res: express<SLocals, RLocals>["createPets"]["response"]) => void | Promise<void>;
   };
   showPetById: {
-    responses:
-      | operations["showPetById"]["responses"]["200"]["content"]["application/json"]
-      | operations["showPetById"]["responses"]["default"]["content"]["application/json"];
-    request: expressRequest<
-      Request<
-        operations["showPetById"]["parameters"]["path"],
-        express<SLocals, RLocals>["showPetById"]["responses"],
-        never,
-        never,
-        RLocals
-      >,
-      SLocals,
-      never
-    >;
+    responses: operations["showPetById"]["responses"]["200"]["content"]["application/json"] | operations["showPetById"]["responses"]["default"]["content"]["application/json"];
+    request: expressRequest<Request<operations["showPetById"]["parameters"]["path"], express<SLocals, RLocals>["showPetById"]["responses"], never, never, RLocals>, SLocals, never>;
     response: Response<express<SLocals, RLocals>["showPetById"]["responses"]>;
-    handler: (
-      req: express<SLocals, RLocals>["showPetById"]["request"],
-      res: express<SLocals, RLocals>["showPetById"]["response"]
-    ) => void | Promise<void>;
+    handler: (req: express<SLocals, RLocals>["showPetById"]["request"], res: express<SLocals, RLocals>["showPetById"]["response"]) => void | Promise<void>;
   };
 }
 
-export interface handlers<
-  SLocals extends Record<string, any>,
-  RLocals extends Record<string, any>
-> {
-  pets: {
+export interface handlers<SLocals extends Record<string, any>, RLocals extends Record<string, any>> {
+  "/pets": {
     get: express<SLocals, RLocals>["listPets"]["handler"];
     post: express<SLocals, RLocals>["createPets"]["handler"];
   };
-  pets_petId: {
+  "/pets/{petId}": {
     get: express<SLocals, RLocals>["showPetById"]["handler"];
   };
-}
-
-export interface external {}
+};

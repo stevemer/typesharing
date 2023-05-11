@@ -1,4 +1,4 @@
-import type { GlobalContext, OpenAPI3, OpenAPITSOptions, Subschema } from "./types.js";
+import type { GlobalContext, OpenAPI3, OpenAPITSOptions, OperationObject, Subschema } from "./types.js";
 import type { Readable } from "node:stream";
 import { URL } from "node:url";
 import load, { resolveSchema, VIRTUAL_JSON_URL } from "./load.js";
@@ -12,6 +12,7 @@ import transformResponseObject, { getResponseTypes } from "./transform/response-
 import transformSchemaObject from "./transform/schema-object.js";
 import { error, escObjKey, getDefaultFetch, getEntries, getSchemaObjectComment, indent } from "./utils.js";
 export * from "./types.js"; // expose all types to consumers
+import { operationRequestType, queryStringType } from "./transform/operation-object.js";
 
 const EMPTY_OBJECT_RE = /^\s*\{?\s*\}?\s*$/;
 
@@ -60,6 +61,8 @@ async function openapiTS(
     silent: options.silent ?? false,
     supportArrayLength: options.supportArrayLength ?? false,
   };
+
+  console.log;
 
   // note: we may be loading many large schemas into memory at once; take care to reuse references without cloning
   const isInlineSchema = typeof schema !== "string" && schema instanceof URL === false; // eslint-disable-line @typescript-eslint/no-unnecessary-boolean-literal-compare
@@ -110,6 +113,9 @@ async function openapiTS(
     `export type expressRequest<RType extends Request, Locals extends Record<string, any>, Query> =  Omit<RType, 'app' | 'query'> & { app: Application<Locals>, query: Query };\n\n`
   );
 
+  const rootSchema = allSchemas["."].schema as OpenAPI3;
+  const paths = rootSchema.paths!;
+
   // 2b. options.inject
   if (options.inject) output.push(options.inject);
   // 2c. root schema
@@ -129,6 +135,8 @@ async function openapiTS(
     delete rootTypes[k];
     delete allSchemas["."]; // garbage collect, but also remove from next step (external)
   }
+
+  const opPairs: [OperationObject, string][] = [];
 
   // 2d. external schemas (subschemas)
   const externalKeys = Object.keys(allSchemas); // root schema (".") should already be removed
@@ -162,6 +170,7 @@ async function openapiTS(
           break;
         }
         case "OperationObject": {
+          opPairs.push([subschema.schema, path]);
           comment = getSchemaObjectComment(subschema.schema, indentLv);
           subschemaOutput = transformOperationObject(subschema.schema, { path, ctx: { ...ctx, indentLv } });
           break;
@@ -226,37 +235,64 @@ async function openapiTS(
     output.push(`export type operations = Record<string, never>;`, "");
   }
 
-  // Express type definitions
-  if (Object.keys(ctx.operations).length) {
-    for (const id of Object.keys(ctx.operations)) {
-      const { operation, pathItem } = ctx.operations[id];
+  console.log("PATHS NOW");
+  console.dir(paths);
+  console.log("HEY!");
+  // // Express type definitions
+  output.push(`export interface express<
+  SLocals extends Record<string, any>,
+  RLocals extends Record<string, any>
+> {
+`);
+  if (paths) {
+    for (const [path, methods] of Object.entries(paths)) {
       const typeArgs = {
-        ...ctx,
-        pathItem,
+        path,
+        ctx,
         allSchemas,
       };
-      output.push(` "${id}": {
-      responses: ${operation.responses ? getResponseTypes(id, operation.responses) : "void"};
-      request: expressRequest<Request<${operationRequestType(id, operation, typeArgs)}>, SLocals, ${queryStringType(
-        id,
-        operation,
-        typeArgs
-      )}>;
-      response: Response<express<SLocals, RLocals>["${id}"]["responses"]>;
-      handler: (req: express<SLocals, RLocals>["${id}"]["request"], res: express<SLocals, RLocals>["${id}"]["response"]) => void | Promise<void>;
-  }\n`);
+      for (const [method, op] of Object.entries(methods as Record<string, OperationObject>)) {
+        const id = op.operationId!;
+        output.push(`  ${id}: {
+    responses: ${op.responses ? getResponseTypes(id, op.responses) : "void"};
+    request: expressRequest<Request<${operationRequestType(id, op, typeArgs)}>, SLocals, ${queryStringType(
+          id,
+          op,
+          typeArgs
+        )}>;
+    response: Response<express<SLocals, RLocals>["${id}"]["responses"]>;
+    handler: (req: express<SLocals, RLocals>["${id}"]["request"], res: express<SLocals, RLocals>["${id}"]["response"]) => void | Promise<void>;
+  };`);
+      }
     }
+    output.push("}\n");
+
     // Now write one that is purely path based that points to express so that handlers
     // have an easier time mapping their types (I don't generally like operationIds for this reason,
     // but I see the argument for callers)
-    // output.handlers = "";
-    // for (const [path, methods] of Object.entries(schema.paths)) {
-    //   output.handlers += ` ${getOperationIdFromPath(path)}: {\n`;
-    //   for (const [method, op] of Object.entries(methods as Record<string, { operationId?: string }>)) {
-    //     output.handlers += ` ${method}: express<SLocals, RLocals>["${getOperationId(op, method, path)}"]["handler"]\n`;
-    //   }
-    //   output.handlers += ` }\n`;
-    // }
+    output.push(
+      "export interface handlers<SLocals extends Record<string, any>, RLocals extends Record<string, any>> {"
+    );
+    for (const [path, methods] of Object.entries(paths)) {
+      output.push(`  "${path}": {`);
+      for (const [method, op] of Object.entries(methods as Record<string, { operationId?: string }>)) {
+        output.push(`    ${method}: express<SLocals, RLocals>["${op.operationId}"]["handler"];`);
+      }
+      output.push(`  };`);
+    }
+    output.push(`};`);
+
+    // And now, create type aliases for each component, response and param set.
+    for (const [path, methods] of Object.entries(paths)) {
+      const typeArgs = {
+        path,
+        ctx,
+        allSchemas,
+      };
+      for (const [method, op] of Object.entries(methods as Record<string, OperationObject>)) {
+        output.push(`export type ${op.operationId}${path}Response = handlers`);
+      }
+    }
   }
 
   // 4a. OneOf type helper (@see https://github.com/Microsoft/TypeScript/issues/14094#issuecomment-723571692)

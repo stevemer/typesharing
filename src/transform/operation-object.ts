@@ -122,7 +122,7 @@ export default function transformOperationObject(
 export function operationRequestType(
   operationId: string,
   operation: OperationObject,
-  options: TransformOperationObjectOptions & { allSchemas: Subschema[] }
+  options: TransformOperationObjectOptions & { allSchemas: { [id: string]: Subschema } }
 ): string {
   const { path, allSchemas, ctx } = options;
   const parameters = ([] as (ReferenceObject | ParameterObject)[]).concat(operation.parameters ?? []);
@@ -139,7 +139,7 @@ export function operationRequestType(
 export function queryStringType(
   operationId: string,
   operation: OperationObject,
-  options: TransformOperationObjectOptions & { allSchemas: Subschema[] }
+  options: TransformOperationObjectOptions & { allSchemas: { [id: string]: Subschema } }
 ): string {
   const { path = {}, ...ctx } = options;
   const parameters = ([] as (ReferenceObject | ParameterObject)[]).concat(operation.parameters ?? []);

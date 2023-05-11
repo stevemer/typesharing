@@ -17,7 +17,7 @@ export default function transformParameterObject(
 
 export function getParameterLocations(
   parameters: (ReferenceObject | ParameterObject)[],
-  options: TransformParameterObjectOptions & { allSchemas: Subschema[] }
+  options: TransformParameterObjectOptions & { allSchemas: { [id: string]: Subschema } }
 ): string[] {
   const { ctx } = options;
   const types: string[] = [];
