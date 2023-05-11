@@ -5,7 +5,7 @@ import path from "path";
 import { URL } from "node:url";
 import glob from "fast-glob";
 import parser from "yargs-parser";
-import openapiTS from "../dist/index.js";
+import openapiTS, { createFilesFromRoutes } from "../dist/index.js";
 import { c, error } from "../dist/utils.js";
 
 const HELP = `Usage
@@ -108,28 +108,27 @@ async function generateSchema(pathToSpec) {
 
   // output
   if (output === OUTPUT_FILE) {
-    let outputFilePath = new URL(flags.output, CWD); // note: may be directory
-    const isDir = fs.existsSync(outputFilePath) && fs.lstatSync(outputFilePath).isDirectory();
-    if (isDir) {
-      const filename = pathToSpec.replace(EXT_RE, ".ts");
-      const originalOutputFilePath = outputFilePath;
-      outputFilePath = new URL(filename, originalOutputFilePath);
-      if (outputFilePath.protocol !== "file:") {
-        outputFilePath = new URL(outputFilePath.host.replace(EXT_RE, ".ts"), originalOutputFilePath);
-      }
+    const outputpath = flags.output;
+    if (!fs.existsSync(outputpath)) {
+      console.log("AWEFEWAFE2222");
+      fs.mkdirSync(outputpath, { recursive: true });
     }
+    fs.writeFileSync(outputpath + "/" + "contract.ts", result.contract, "utf8");
 
-    fs.writeFileSync(outputFilePath, result, "utf8");
+    // Now, genreate the rest.
+    console.log("HEY");
+    console.dir(result.pathSpec, { depth: null });
+    createFilesFromRoutes(result.pathSpec, outputpath + "/" + "spec");
 
     const timeEnd = process.hrtime(timeStart);
     const time = timeEnd[0] + Math.round(timeEnd[1] / 1e6);
-    console.log(`🚀 ${c.green(`${pathToSpec} → ${c.bold(outputFilePath)}`)} ${c.dim(`[${time}ms]`)}`);
+    console.log(`🚀 ${c.green(`${pathToSpec} → ${c.bold(outputpath)}`)} ${c.dim(`[${time}ms]`)}`);
   } else {
-    process.stdout.write(result);
+    process.stdout.write(result.contract);
     // if stdout, (still) don’t log anything to console!
   }
 
-  return result;
+  return result.contract;
 }
 
 async function main() {
